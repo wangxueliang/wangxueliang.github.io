@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <!-- Html Head Tag-->
+  <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="wxl">
+  <!-- Open Graph Data -->
+  <meta property="og:title" content="vue.js的Virtual Dom应用"/>
+  <meta property="og:description" content="" />
+  <meta property="og:site_name" content="三点包子"/>
+  <meta property="og:type" content="article" />
+  <meta property="og:image" content="http://yoursite.com"/>
+  
+    <link rel="alternate" href="/atom.xml" title="三点包子" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+
+  <!-- Site Title -->
+  <title>三点包子</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <!-- Custom CSS -->
+  
+  <link rel="stylesheet" href="/css/style.light.css">
+
+  <!-- Google Analytics -->
+  
+
+</head>
+
+  <body>
+    <!-- Page Header -->
+
+
+<header class="site-header header-background" style="background-image: url(/img/default-banner-dark.jpg)">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="page-title with-background-image">
+          <p class="title">vue.js的Virtual Dom应用</p>
+          <p class="subtitle"></p>
+        </div>
+        <div class="site-menu with-background-image">
+          <ul>
+            
+              <li>
+                <a href="/">
+                  
+                  主页
+                  
+                </a>
+              </li>
+            
+              <li>
+                <a href="/archives">
+                  
+                  文档
+                  
+                </a>
+              </li>
+            
+              <li>
+                <a href="https://github.com/wangxueliang">
+                  
+                  Github
+                  
+                </a>
+              </li>
+            
+              <li>
+                <a href="mailto:sandianbaozi@163.com">
+                  
+                  Email
+                  
+                </a>
+              </li>
+            
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<article>
+  <div class="container typo">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="post-info text-muted">
+          
+            <!-- Author -->
+            <span class="author info">By wxl</span>
+          
+          <!-- Date -->
+          <span class="date-time info">On
+            <span class="date">2017-05-24</span>
+            <span class="time">17:21:30</span>
+          </span>
+          
+          <!--  Categories  -->
+            <span class="categories info">Under 
+
+<a href="/categories/技术/">技术</a>
+</span>
+          
+        </div>
+        <!-- Tags -->
+        
+          <div class="post-tags text-muted">
+            Tags: 
+
+<a class="tag" href="/tags/Virtual-Dom/">#Virtual Dom</a> <a class="tag" href="/tags/虚拟DOM/">#虚拟DOM</a>
+
+
+          </div>
+        
+        <!-- Post Main Content -->
+        <div class="post-content">
+          <blockquote>
+<p><em>本文主要以 vue 的 2.2.4 版本来进行分析。</em></p>
+</blockquote>
+<hr>
+<h2 id="Virtual-Dom"><a href="#Virtual-Dom" class="headerlink" title="Virtual Dom?"></a>Virtual Dom?</h2><p>这个概念伴随着react的出现而得到广泛的认识，现在也在各大mvvm框架得到应用，为什么大家都要用它了？其实随着web应用越来越复杂，数据交互越来越频繁，使用jquery或者原生dom api,通过事件和变量已无法满足，比如状态太多，代码不易阅读和维护，使用mvvm框架后，不在需要我们去操作dom，而是框架帮我们做，视图改变对应的状态改变，然后状态变化，我们再重绘整个视图就好了，这种做法很好，但是如果频繁的操作或者数据量很多的情况下，性能上是会遇到问题的，代价太大，那能不能只去操作数据改变的视图？virtual dom能有效的解决这个问题（<span style="color:red">但是绝不单单为了解决这个问题</span>），所以我说，它是一种提高界面渲染性能的技术方案</p>
+<h2 id="实现概括"><a href="#实现概括" class="headerlink" title="实现概括"></a>实现概括</h2><p>使用JavaScript对象模拟Dom树结构，当数据发生改变时候，并不是直接全量更新，而是通过虚拟dom比对出最小的差异，再修改真实Dom,避免整个视图重新构建、重绘;接下来从三个方面详细介绍实现过程：</p>
+<ul>
+<li>VNode对象的生成过程</li>
+<li>VNode生成视图策略-patch</li>
+<li>新旧VNode的diff算法</li>
+</ul>
+<h2 id="VNode对象的生成过程"><a href="#VNode对象的生成过程" class="headerlink" title="VNode对象的生成过程"></a>VNode对象的生成过程</h2><p><img src="/2017/05/24//diary-2017-05-24/vd_create.png" alt="image"><br>从上图可以看出：</p>
+<ul>
+<li>通过html的词法分析 =&gt; js抽象语法树</li>
+<li>js抽象语法树 =&gt; render function</li>
+<li>render function =&gt; virtual Dom(VNode对象)<br>接下来我们看下每一个过程（这里我们主要通过图片来看，更直观）：<br><strong style="font-size: 1rem">1、通过html的词法分析 =&gt; js抽象语法树？</strong><br><img src="/2017/05/24//diary-2017-05-24/html2js.png" alt="image"><br>将html结构变成对应的javascript对象，对象的tag属性为div，对象的attrs对象包含id为main，对象的events对象包含click，值为cl，对象的children。<br><strong style="font-size: 1rem">2、js抽象语法树 =&gt; render function？</strong><br><img src="/2017/05/24//diary-2017-05-24/js2fn.png" alt="image"><br>通过解析模板对应的js抽象语法树，拼接出一个对应的字符串，然后使用with运算符封装出一个render function,当执行的时候，将当前的vue实例传入<br><strong style="font-size: 1rem">3、render function =&gt; virtual Dom(VNode对象) ？</strong><br><img src="/2017/05/24//diary-2017-05-24/fn2vnode.png" alt="image"><br>每当变量（message）改变，都会重新只想render function,进而生成一个新的VNode对象，才会有后续提到的前后diff，找到最小差异，然后更新到视图。</li>
+</ul>
+<hr>
+<p>看到这里，已经知道Vnode的生成过程，那么接下来看一下vue中是如何diff？如何提升渲染性能？<br>在看介绍之前，我们先看一下生成Vnode的构造函数？<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">var VNode = function VNode(</span><br><span class="line">    tag,</span><br><span class="line">    data,</span><br><span class="line">    children,</span><br><span class="line">    text,</span><br><span class="line">    elm,</span><br><span class="line">    context,</span><br><span class="line">    componentOptions</span><br><span class="line">) &#123;</span><br><span class="line">    this.tag = tag;</span><br><span class="line">    this.data = data;</span><br><span class="line">    this.children = children;</span><br><span class="line">    this.text = text;</span><br><span class="line">    this.elm = elm;</span><br><span class="line">    this.ns = undefined;</span><br><span class="line">    this.context = context;</span><br><span class="line">    this.functionalContext = undefined;</span><br><span class="line">    this.key = data &amp;&amp; data.key;</span><br><span class="line">    this.componentOptions = componentOptions;</span><br><span class="line">    this.componentInstance = undefined;</span><br><span class="line">    this.parent = undefined;</span><br><span class="line">    this.raw = false;</span><br><span class="line">    this.isStatic = false;</span><br><span class="line">    this.isRootInsert = true;</span><br><span class="line">    this.isComment = false;</span><br><span class="line">    this.isCloned = false;</span><br><span class="line">    this.isOnce = false;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>这里我们着重关注几个属性，tag(标签名)、data(属性)、children(子元素信息)、key(元素标识)、isCommemt(是否是注释标签)，这几个属性，在dom对比中起很大作用，看下面代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function sameVnode(vnode1, vnode2) &#123;</span><br><span class="line">    return (</span><br><span class="line">        vnode1.key === vnode2.key &amp;&amp;</span><br><span class="line">        vnode1.tag === vnode2.tag &amp;&amp;</span><br><span class="line">        vnode1.isComment === vnode2.isComment &amp;&amp;</span><br><span class="line">        !vnode1.data === !vnode2.data</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在vue中，如果具有相同的key、tag、isComment以及都具有data属性，不管data属性是否一样，那么就认为是同一个元素。</p>
+<h2 id="VNode生成视图策略"><a href="#VNode生成视图策略" class="headerlink" title="VNode生成视图策略"></a>VNode生成视图策略</h2><p><img src="/2017/05/24//diary-2017-05-24/patch.png" alt="image"><br>我们再一一描述一下patch函数所做的事情(oldVnode和vnode为前后两个“VNode”对象)：<br>第一步：若vnode不存在，可知意图是销毁元素，那么接着去判断oldVnode是否存在，若不存在，则直接return,若存在，则销毁oldVnode，然后return,执行完成。<br>第二步：若vnode存在，然后判断oldVnode是否存在，若不存在，创建新的根节点<br>第三步：若oldVnode和vnode都存在，然后判断oldVnode是否是真实节点（通过nodeType的值判断，真实元素的nodeType值是存在的，虚拟dom对象的nodeType值是undefined），如果是真实节点，则好比初始化渲染，则直接调用createElm创建新元素插入页面，然后删除原始页面元素，如果oldVnode和vnode都是虚拟dom对象，则调用patchvnode方法，比较出最小差异，然后更新页面元素。</p>
+<h2 id="新旧VNode的diff算法"><a href="#新旧VNode的diff算法" class="headerlink" title="新旧VNode的diff算法"></a>新旧VNode的diff算法</h2><p>diff算法的核心包括两个方面：同层比较和深度优先遍历<br><strong style="font-size: 1rem">1、同层比较</strong><br>在mvvm框架使用过程中，我们知道不会跨越层级修改DOM元素，因此上我们只比较同层级，不跨层比较，如果逐层逐层搜索遍历，时间复杂度将会达到O(n^3)的级别，代价很高，但是如果比较同层级的方式，时间复杂度可以降低最多到O(n)；如下图：<br><img src="/2017/05/24//diary-2017-05-24/diff_tong.png" alt="image"><br><strong style="font-size: 1rem">2、深度优先遍历</strong><br>深度优先遍历，从初始访问结点出发，我们知道初始访问结点可能有多个邻接结点，深度优先遍历的策略就是首先访问第一个邻接结点，然后再以这个被访问的邻接结点作为初始结点，访问它的第一个邻接结点。如下图：<br><img src="/2017/05/24//diary-2017-05-24/sdyx.png" alt="image"><br><strong style="font-size: 1rem">接下来看一下diff的具体过程patchVnoe的实现过程，先看一下流程图：</strong><br><img src="/2017/05/24//diary-2017-05-24/patchVnode.png" alt="image"><br>我们再一一描述一下patch函数所做的事情(oldVnode和vnode为前后两个VNode对象)：<br>第一步：若oldVnode跟vnode恒等，证明他们的引用路径相同，那么不需要做任何事情<br>第二步：若oldVnode跟vnode都是静态节点，且具有相同的key，同时vnode是克隆节点或是v-once指令控制的节点，只需要把oldVnode.elm和oldVnode.child都复制到vnode上，也不用再有其他操作<br>第三步：若vnode存在text值，说明是文本节点，然后当vnode.text != oldVnode.text时，只需要更新vnode.elm的文本内容就可以<br>第四步：若vnode的text为null，说明包含子节点，这个时候分为四种情况</p>
+<ul>
+<li>1、若oldVnode和vnode都存在子节点，并不恒等，根据深度优先遍历原则，开始对比子节点，调用updateChildren，后续会<span style="color:red">详细说明</span></li>
+<li>2、若<span style="color:red">只有</span>vnode存在子节点，则新增这些子节点，(这里注意一下：如果oldVnode的text不为空，首先将text置为空)</li>
+<li>3、若<span style="color:red">只有</span>oldVnode存在子节点,则删除这些子节点</li>
+<li>4、若<span style="color:red">只有</span>oldVnode存在text值,则将其text值置为空字符串<br><strong style="font-size: 1rem">刚提到第一种情况，接下来我们详细看一下updateChildren函数的实现</strong><br>patchVnode中更新子节点的算法其实是在updateChildren函数中实现的，因此上这里内容更关键，更难理解一点，我们先看一下代码实现：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) &#123;</span><br><span class="line">    var oldStartIdx = 0;</span><br><span class="line">    var newStartIdx = 0;</span><br><span class="line">    var oldEndIdx = oldCh.length - 1;</span><br><span class="line">    var oldStartVnode = oldCh[0];</span><br><span class="line">    var oldEndVnode = oldCh[oldEndIdx];</span><br><span class="line">    var newEndIdx = newCh.length - 1;</span><br><span class="line">    var newStartVnode = newCh[0];</span><br><span class="line">    var newEndVnode = newCh[newEndIdx];</span><br><span class="line">    var oldKeyToIdx, idxInOld, elmToMove, refElm;</span><br><span class="line"></span><br><span class="line">    var canMove = !removeOnly;</span><br><span class="line">    while (oldStartIdx &lt;= oldEndIdx &amp;&amp; newStartIdx &lt;= newEndIdx) &#123;</span><br><span class="line">        if (isUndef(oldStartVnode)) &#123;</span><br><span class="line">            oldStartVnode = oldCh[++oldStartIdx]; // Vnode has been moved left</span><br><span class="line">        &#125; else if (isUndef(oldEndVnode)) &#123;</span><br><span class="line">            oldEndVnode = oldCh[--oldEndIdx];</span><br><span class="line">        &#125; else if (sameVnode(oldStartVnode, newStartVnode)) &#123;</span><br><span class="line">            patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);</span><br><span class="line">            oldStartVnode = oldCh[++oldStartIdx];</span><br><span class="line">            newStartVnode = newCh[++newStartIdx];</span><br><span class="line">        &#125; else if (sameVnode(oldEndVnode, newEndVnode)) &#123;</span><br><span class="line">            patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);</span><br><span class="line">            oldEndVnode = oldCh[--oldEndIdx];</span><br><span class="line">            newEndVnode = newCh[--newEndIdx];</span><br><span class="line">        &#125; else if (sameVnode(oldStartVnode, newEndVnode)) &#123; // Vnode moved right</span><br><span class="line">            patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);</span><br><span class="line">            canMove &amp;&amp; nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(</span><br><span class="line">                oldEndVnode.elm));</span><br><span class="line">            oldStartVnode = oldCh[++oldStartIdx];</span><br><span class="line">            newEndVnode = newCh[--newEndIdx];</span><br><span class="line">        &#125; else if (sameVnode(oldEndVnode, newStartVnode)) &#123; // Vnode moved left</span><br><span class="line">            patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);</span><br><span class="line">            canMove &amp;&amp; nodeOps.insertBefore(parentElm, oldEndVnode.elm,</span><br><span class="line">                oldStartVnode.elm);</span><br><span class="line">            oldEndVnode = oldCh[--oldEndIdx];</span><br><span class="line">            newStartVnode = newCh[++newStartIdx];</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            if (isUndef(oldKeyToIdx)) &#123;</span><br><span class="line">                oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);</span><br><span class="line">            &#125;</span><br><span class="line">            idxInOld = isDef(newStartVnode.key) ? oldKeyToIdx[newStartVnode.key] :</span><br><span class="line">                null;</span><br><span class="line">            if (isUndef(idxInOld)) &#123; // New element</span><br><span class="line">                createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm);</span><br><span class="line">                newStartVnode = newCh[++newStartIdx];</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                elmToMove = oldCh[idxInOld];</span><br><span class="line">                /* istanbul ignore if */</span><br><span class="line">                if (&quot;development&quot; !== &apos;production&apos; &amp;&amp; !elmToMove) &#123;</span><br><span class="line">                    warn(</span><br><span class="line">                        &apos;It seems there are duplicate keys that is causing an update error. &apos; +</span><br><span class="line">                        &apos;Make sure each v-for item has a unique key.&apos;</span><br><span class="line">                    );</span><br><span class="line">                &#125;</span><br><span class="line">                if (sameVnode(elmToMove, newStartVnode)) &#123;</span><br><span class="line">                    patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);</span><br><span class="line">                    oldCh[idxInOld] = undefined;</span><br><span class="line">                    canMove &amp;&amp; nodeOps.insertBefore(parentElm, newStartVnode.elm,</span><br><span class="line">                        oldStartVnode.elm);</span><br><span class="line">                    newStartVnode = newCh[++newStartIdx];</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    // same key but different element. treat as new element</span><br><span class="line">                    createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode</span><br><span class="line">                        .elm);</span><br><span class="line">                    newStartVnode = newCh[++newStartIdx];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    if (oldStartIdx &gt; oldEndIdx) &#123;</span><br><span class="line">        refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;</span><br><span class="line">        addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx,</span><br><span class="line">            insertedVnodeQueue);</span><br><span class="line">    &#125; else if (newStartIdx &gt; newEndIdx) &#123;</span><br><span class="line">        removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>我们一一解析一下：<br>1、获取oldVnode和vnode的firstChild、lastChild，赋值给oldStartVnode、oldEndVnode、newStartVnode、newEndVnode，并记录他们序号oldStartIdx、oldEndIdx、newStartIdx、newEndIdx<br>2、通过while循环，进行比较，终止条件就是’oldStartIdx &lt;= oldEndIdx &amp;&amp; newStartIdx &lt;= newEndIdx‘<br>3、若oldStartIdx &gt; oldEndIdx 新增节点；newStartIdx &gt; newEndIdx 删除节点<br>接下来看一下while循环中的内容，前两个判断没什么好说的，从第三个说起<br>1、如果oldStartVnode和newStartVnode是同一节点，调用patchVnode进行patch，然后将oldStartVnode和newStartVnode都设置为下一个子节点，重复上述流程<br>2、如果oldEndVnode和newEndVnode是同一节点，调用patchVnode进行patch，然后将oldEndVnode和newEndVnode都设置为上一个子节点，重复上述过程<br>3、如果oldStartVnode和newEndVnode是同一节点，调用patchVnode进行patch，如果removeOnly是false，那么可以把oldStartVnode.elm移动到oldEndVnode.elm之后，然后把oldStartVnode设置为下一个节点，newEndVnode设置为上一个节点，重复上述过程<br>4、如果newStartVnode和oldEndVnode是同一节点，调用patchVnode进行patch，如果removeOnly是false，那么可以把oldEndVnode.elm移动到oldStartVnode.elm之前，然后把newStartVnode设置为下一个节点，oldEndVnode设置为上一个节点，重复上述过程<br>5、如果以上都不匹配，就尝试在oldChildren中寻找跟newStartVnode具有相同key的节点，如果找不到相同key的节点，说明newStartVnode是一个新节点，就创建一个，然后把newStartVnode设置为下一个节点<br>6、如果上一步找到了跟newStartVnode相同key的节点，那么通过其他属性的比较来判断这2个节点是否是同一个节点，如果是，就调用patchVnode进行patch，如果removeOnly是false，就把newStartVnode.elm插入到oldStartVnode.elm之前，把newStartVnode设置为下一个节点，重复上述过程<br>7、如果在oldChildren中没有寻找到newStartVnode的同一节点，那就创建一个新节点，把newStartVnode设置为下一个节点，重复上述过程<br><strong style="font-size: 1rem">一直重复上述过程，直到触发while循环的终止条件</strong><br><img src="/2017/05/24//diary-2017-05-24/updateChildren.png" alt="image"><br>说到这里本章内容就算完了，对vue中的Virtual Dom有一定认识没？文章第一段说过了，Virtual Dom<span style="color:red">绝不单单为了解决提高性能问题</span>，其他内容正在研究ing，敬请期待O(∩_∩)O~~</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
+
+
+
+    <!-- Footer -->
+<footer>
+  <!-- <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <p class="copyright text-muted">
+          Theme By <a target="_blank" href="https://github.com/levblanc">Levblanc.</a>
+          Inspired By <a target="_blank" href="https://github.com/klugjo/hexo-theme-clean-blog">Clean Blog.</a>
+        <p class="copyright text-muted">
+          Powered By <a target="_blank" href="https://hexo.io/">Hexo.</a>
+        </p>
+      </div>
+    </div>
+  </div> -->
+</footer>
+
+
+    <!-- After Footer Scripts -->
+<script src="/js/highlight.pack.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function(event) {
+    var codeBlocks = Array.prototype.slice.call(document.getElementsByTagName('pre'))
+    codeBlocks.forEach(function(block, index) {
+      hljs.highlightBlock(block);
+    });
+  });
+</script>
+
+  </body>
+</html>
+
