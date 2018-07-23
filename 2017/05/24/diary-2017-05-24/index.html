@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="">
-  <meta name="author" content="wxl">
+  <meta name="author" content="三点包子">
   <!-- Open Graph Data -->
   <meta property="og:title" content="vue.js的Virtual Dom应用"/>
   <meta property="og:description" content="" />
@@ -95,12 +95,12 @@
         <div class="post-info text-muted">
           
             <!-- Author -->
-            <span class="author info">By wxl</span>
+            <span class="author info">By 三点包子</span>
           
           <!-- Date -->
           <span class="date-time info">On
             <span class="date">2017-05-24</span>
-            <span class="time">17:49:51</span>
+            <span class="time">14:35:29</span>
           </span>
           
           <!--  Categories  -->
@@ -127,6 +127,9 @@
 </blockquote>
 <hr>
 <h2 id="Virtual-Dom"><a href="#Virtual-Dom" class="headerlink" title="Virtual Dom?"></a>Virtual Dom?</h2><p>这个概念伴随着react的出现而得到广泛的认识，现在也在各大mvvm框架得到应用，为什么大家都要用它了？其实随着web应用越来越复杂，数据交互越来越频繁，使用jquery或者原生dom api,通过事件和变量已无法满足，比如状态太多，代码不易阅读和维护，使用mvvm框架后，不在需要我们去操作dom，而是框架帮我们做，视图改变对应的状态改变，然后状态变化，我们再重绘整个视图就好了，这种做法很好，但是如果频繁的操作或者数据量很多的情况下，性能上是会遇到问题的，代价太大，那能不能只去操作数据改变的视图？virtual dom能有效的解决这个问题（<span style="color:red">但是绝不单单为了解决这个问题</span>），所以我说，它是一种提高界面渲染性能的技术方案</p>
+<blockquote>
+<p><em>核心思想是：对复杂的文档DOM结构，提供一种方便的工具，进行最小化地DOM操作。</em></p>
+</blockquote>
 <h2 id="实现概括"><a href="#实现概括" class="headerlink" title="实现概括"></a>实现概括</h2><p>使用JavaScript对象模拟Dom树结构，当数据发生改变时候，并不是直接全量更新，而是通过虚拟dom比对出最小的差异，再修改真实Dom,避免整个视图重新构建、重绘;接下来从三个方面详细介绍实现过程：</p>
 <ul>
 <li>VNode对象的生成过程</li>
